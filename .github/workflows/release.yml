@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate Release Notes
+        run: |
+          echo "# termux-debian-auto ${{ github.ref_name }}" > ${{ github.workspace }}/RELEASE_NOTES.md
+          echo "" >> ${{ github.workspace }}/RELEASE_NOTES.md
+          echo "## Changes" >> ${{ github.workspace }}/RELEASE_NOTES.md
+          git log --pretty=format:"- %s (%h)" $(git describe --abbrev=0 --tags HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD >> ${{ github.workspace }}/RELEASE_NOTES.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ${{ github.workspace }}/RELEASE_NOTES.md
+          generate_release_notes: false
+          files: |
+            install.sh

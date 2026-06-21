@@ -1,0 +1,4 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Debian CLI launcher - quick entry to Debian proot environment
+set -euo pipefail
+proot-distro login debian --user debian --shared-tmp -- /bin/bash
