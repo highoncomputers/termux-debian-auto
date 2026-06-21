@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Smoke test for termux-debian-auto
+# Smoke test for termux-debian-auto (updated version)
 # Verifies the installation is complete and commands exist
 
 set -euo pipefail
@@ -84,9 +84,21 @@ else
     test_fail "PulseAudio startup script missing"
 fi
 
+# Check termux.properties
+echo "--- Checking termux.properties ---"
+if [[ -f "${HOME}/.termux/termux.properties" ]] && grep -q "allow-external-apps" "${HOME}/.termux/termux.properties"; then
+    test_pass "termux.properties configured correctly"
+else
+    test_fail "termux.properties not configured correctly"
+fi
+
 echo
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 
 if [[ $FAIL -gt 0 ]]; then
+    echo "Smoke test failed! Please check the installation."
     exit 1
+else
+    echo "Smoke test passed! Installation is complete."
+    exit 0
 fi

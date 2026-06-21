@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Configure XFCE4 GUI inside Debian proot
+# Configure XFCE4 GUI inside Debian proot (fixed version)
 
 set -euo pipefail
 
@@ -19,8 +19,36 @@ print_status() {
     esac
 }
 
+log() {
+    local level=$1
+    local message=$2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE"
+}
+
+validate_debian_home() {
+    if [[ ! -d "${DEBIAN_HOME}" ]]; then
+        print_status error "Debian home directory not found: ${DEBIAN_HOME}"
+        log "ERROR" "Debian home directory not found: ${DEBIAN_HOME}"
+        return 1
+    fi
+    
+    if [[ ! -w "${DEBIAN_HOME}" ]]; then
+        print_status error "Debian home directory not writable: ${DEBIAN_HOME}"
+        log "ERROR" "Debian home directory not writable: ${DEBIAN_HOME}"
+        return 1
+    fi
+    
+    print_status ok "Debian home directory validated: ${DEBIAN_HOME}"
+    return 0
+}
+
 main() {
     print_status info "Configuring XFCE4 desktop..."
+    log "INFO" "Starting XFCE4 desktop configuration"
+    
+    if ! validate_debian_home; then
+        exit 1
+    fi
 
     mkdir -p "${DEBIAN_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml" "${DEBIAN_HOME}/.config/xfce4/terminal" "${DEBIAN_HOME}/.config/gtk-3.0" "${DEBIAN_HOME}/.config/autostart"
 

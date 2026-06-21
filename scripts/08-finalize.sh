@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Finalize installation - reload settings, show success message
+# Finalize installation - reload settings, show success message (fixed version)
 
 set -euo pipefail
 
@@ -16,22 +16,40 @@ print_status() {
     esac
 }
 
+log() {
+    local level=$1
+    local message=$2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE"
+}
+
 main() {
     print_status info "Configuring Termux settings..."
+    log "INFO" "Starting Termux settings configuration"
 
     mkdir -p "${HOME}/.termux"
 
     if ! grep -q "allow-external-apps" "${HOME}/.termux/termux.properties" 2>/dev/null; then
         echo "allow-external-apps = true" >> "${HOME}/.termux/termux.properties"
+        log "INFO" "Added allow-external-apps to termux.properties"
     fi
 
-    termux-reload-settings >> "${LOG_FILE}" 2>&1 || true
+    if ! termux-reload-settings; then
+        print_status warn "Failed to reload Termux settings"
+        log "WARN" "Failed to reload Termux settings"
+    else
+        log "INFO" "Termux settings reloaded successfully"
+    fi
 
     print_status info "Cleaning up..."
-    rm -f "${HOME}/install.sh" 2>/dev/null || true
+    if rm -f "${HOME}/install.sh" 2>/dev/null; then
+        log "INFO" "Removed install.sh"
+    else
+        log "WARN" "Failed to remove install.sh"
+    fi
 
     echo
     print_status ok "Installation complete!"
+    log "INFO" "Installation completed successfully"
     echo
     echo -e "\033[0;32m╔══════════════════════════════════════════════════════════════╗\033[0m"
     echo -e "\033[0;32m║\033[0m              \033[1;33mtermux-debian-auto is ready!\033[0m              \033[0;32m║\033[0m"
