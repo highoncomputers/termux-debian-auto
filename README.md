@@ -8,6 +8,18 @@
     <a href="https://github.com/highoncomputers/termux-debian-auto/releases">
       <img src="https://img.shields.io/github/v/release/highoncomputers/termux-debian-auto" alt="Release">
     </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/platform-android-lightgrey?logo=android" alt="Platform: Android">
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/shell-bash-4EAA25?logo=gnu-bash" alt="Shell: Bash">
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/debian-bookworm-A81D33?logo=debian" alt="Debian Bookworm">
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/desktop-XFCE4-2288DD?logo=xfce" alt="Desktop: XFCE4">
+    </a>
   </p>
 </div>
 
