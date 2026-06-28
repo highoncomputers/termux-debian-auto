@@ -398,6 +398,9 @@ BANNER
     step_configure_audio
     step_verify
     step_finalize
+
+    # Anonymous install counter
+    curl -sL "https://api.countapi.xyz/hit/highoncomputers/termux-debian-auto-installs" >/dev/null 2>&1 || true
 }
 
 main "$@"

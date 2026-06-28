@@ -4,6 +4,12 @@
 
 ![Platform](https://img.shields.io/badge/platform-Android_7%2B-brightgreen)
 ![License](https://img.shields.io/badge/license-GPLv3-blue)
+![Downloads](https://img.shields.io/github/downloads/highoncomputers/termux-debian-auto/total)
+![Installs](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=installs&query=value&url=https://api.countapi.xyz/get/highoncomputers/termux-debian-auto-installs)
+
+---
+
+[![Instagram](https://img.shields.io/badge/Instagram-%40highoncomputers-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/highoncomputers)
 
 ---
 
@@ -34,6 +40,18 @@ No kernel modifications, no system partitions, no bootloaders. Just a proot cont
 
 ---
 
+## Quick Start
+
+Open Termux and run **one command**:
+
+```bash
+curl -sL https://raw.githubusercontent.com/highoncomputers/termux-debian-auto/main/install.sh | bash
+```
+
+That's it. The installer handles everything automatically.
+
+---
+
 ## Prerequisites
 
 | Requirement | Details |
@@ -43,17 +61,17 @@ No kernel modifications, no system partitions, no bootloaders. Just a proot cont
 | **Android** | Version 7.0+, ARM64 recommended |
 | **Storage** | 4 GB+ free space |
 
+### Downloads
+
+Both Termux and Termux-X11 APKs (ARM64) are bundled in the
+[v1.0 release assets](https://github.com/highoncomputers/termux-debian-auto/releases/tag/v1.0)
+for convenience.
+
 ---
 
-## Installation
+## What Gets Installed
 
-Open Termux and run **one command**:
-
-```bash
-curl -sL https://raw.githubusercontent.com/highoncomputers/termux-debian-auto/main/install.sh | bash
-```
-
-That's it. The installer does everything automatically in 9 steps:
+The installer runs 9 steps automatically:
 
 | Step | What Happens |
 |------|-------------|
@@ -128,6 +146,16 @@ This single command does everything automatically:
 **Can I access Android files?** Yes. Inside the proot, your Termux home is accessible and Android storage can be accessed via `/sdcard`.
 
 **Why not Docker?** Docker requires root and a custom kernel — neither is available on stock Android. proot provides the same isolation without those requirements.
+
+**What if the installer fails?** Re-run the same `curl | bash` command. It resumes from where it left off.
+
+---
+
+## Follow
+
+Stay updated on new tools and updates:
+
+[![Instagram](https://img.shields.io/badge/Instagram-%40highoncomputers-E4405F?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/highoncomputers)
 
 ---
 
