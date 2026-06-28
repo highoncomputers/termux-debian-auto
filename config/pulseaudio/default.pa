@@ -1,5 +1,0 @@
-default-server = 127.0.0.1
-autospawn = yes
-daemon-binary = /data/data/com.termux/files/usr/bin/pulseaudio
-enable-shm = false
-exit-idle-time = -1
