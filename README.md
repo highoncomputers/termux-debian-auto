@@ -24,16 +24,15 @@ curl -sL https://raw.githubusercontent.com/highoncomputers/termux-debian-auto/ma
 
 ## What It Does
 
-The installer automatically:
+Installs Debian **Trixie** (Debian 13/testing) directly via Docker/OCI image — no Bookworm involved at all:
 
-1. Checks system compatibility
-2. Installs required Termux packages (`proot-distro`, `termux-x11-nightly`, `pulseaudio`, `virglrenderer-android`, `xfce4`, etc.)
-3. Installs Debian via `proot-distro` and **upgrades it to Trixie** (Debian 13/testing)
-4. Creates user `debian` with passwordless sudo
-5. Configures XFCE4 desktop (panel, terminal, theme)
-6. Sets up PulseAudio for audio forwarding
-7. Enables VirGL hardware acceleration
-8. Creates `debian` and `debian-gui` launcher commands
+1. ✅ Checks system compatibility
+2. ✅ Installs Termux packages: `proot-distro`, `termux-x11-nightly`, `pulseaudio`
+3. ✅ Pulls `debian:trixie` Docker image via proot-distro v5
+4. ✅ Configures user `debian` with passwordless sudo
+5. ✅ Installs XFCE4 desktop, Firefox ESR, audio
+6. ✅ Creates `debian` and `debian-gui` launcher commands
+7. ✅ Verifies everything works — self-healing re-runs
 
 ## Usage
 
@@ -43,7 +42,7 @@ The installer automatically:
 debian
 ```
 
-Enters the Debian Trixie proot environment as user `debian`. Type `exit` to return to Termux.
+Enters the Debian Trixie environment. Type `exit` to return to Termux.
 
 ### GUI Desktop
 
@@ -51,72 +50,38 @@ Enters the Debian Trixie proot environment as user `debian`. Type `exit` to retu
 debian-gui
 ```
 
-Launches a full XFCE4 desktop via Termux X11. This command:
+Launches XFCE4 via Termux X11:
+- Starts Termux X11 on display `:0`
+- Logs into Debian Trixie with shared `$TMPDIR`
+- Launches `startxfce4` via dbus
 
-1. Kills any existing termux-x11 / proot / pulseaudio / virgl sessions
-2. Starts fresh PulseAudio with TCP audio forwarding
-3. Launches Termux X11 on display `:1`
-4. Starts VirGL for hardware acceleration
-5. Opens the XFCE4 desktop session
+## Self-Healing
 
-> The `debian-gui` command always starts fresh — no orphaned processes.
-
-## What Gets Installed
-
-### Termux Packages
-
-- `proot-distro` — Container management
-- `termux-x11-nightly` — X11 server
-- `pulseaudio` — Audio server
-- `virglrenderer-android` — GPU acceleration
-- `xfce4`, `xfce4-terminal` — Desktop environment
-
-### Debian Trixie Packages
-
-- `sudo` — Privilege escalation (NOPASSWD for user `debian`)
-- `xfce4`, `xfce4-goodies` — Desktop environment
-- `dbus-x11` — D-Bus for X11
-- `firefox-esr` — Web browser
-- `pavucontrol-qt` — Audio control
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `debian` | Enter Debian Trixie CLI |
-| `debian-gui` | Launch XFCE4 desktop |
-
-## Configuration
-
-- **Username**: `debian` (no password)
-- **Sudo**: NOPASSWD (passwordless)
-- **Display**: `:1` (avoids conflicts with native Termux X11 on `:0`)
-- **Shared-tmp**: Enabled (access Termux packages from inside Debian)
-- **Audio**: PulseAudio TCP mode on `127.0.0.1`
-- **Graphics**: VirGL via `virpipe` driver
-
-## Updating
-
-Run the installer again — it's idempotent:
+If the installation is interrupted (network drop, battery dies), just re-run the same command:
 
 ```bash
 curl -sL https://raw.githubusercontent.com/highoncomputers/termux-debian-auto/main/install.sh | bash
 ```
 
+It detects completed steps and skips them automatically.
+
 ## FAQ
 
 ### Do I need root?
-No. Everything runs in user-space using proot.
+No. Everything runs in user-space via proot.
 
-### Why display `:1` instead of `:0`?
-Display `:0` is used by native Termux X11 sessions. Using `:1` prevents conflicts.
+### Why Trixie and not Bookworm?
+Debian Trixie (testing) has newer packages. The installer pulls `debian:trixie` directly — no Bookworm involved at any stage.
 
 ### How do I install additional packages?
-Inside the Debian CLI or terminal:
+Inside the Debian CLI:
 ```bash
 sudo apt update
 sudo apt install <package>
 ```
+
+### How does this differ from the old version?
+This uses **proot-distro v5** which pulls Docker/OCI images directly. The old version installed Bookworm via tarball then dist-upgraded. This version installs Trixie from the start.
 
 ## License
 
