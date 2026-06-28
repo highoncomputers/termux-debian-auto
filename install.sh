@@ -135,13 +135,17 @@ LAUNCHER_CLI
     cat > "${PREFIX}/bin/debian-gui" << 'LAUNCHER_GUI'
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
-export XDG_RUNTIME_DIR=${TMPDIR}
+if [[ -f /etc/debian_version ]]; then
+    echo "Error: debian-gui must be run from Termux, not from inside the proot." >&2
+    exit 1
+fi
+export XDG_RUNTIME_DIR=${TMPDIR:-/tmp}
 termux-x11 :0 >/dev/null 2>&1 &
 sleep 3
 proot-distro login debian --shared-tmp -- bash -c "
 export DISPLAY=:0
 export PULSE_SERVER=127.0.0.1
-dbus-launch startxfce4
+dbus-launch --exit-with-session xfce4-session
 "
 LAUNCHER_GUI
 
@@ -172,30 +176,37 @@ step_install_trixie() {
     step_header 4 "Install Debian Trixie"
     if is_done "trixie"; then info "Already installed, skipping"; return; fi
 
-    if [[ -d "$ROOTFS" ]]; then
-        warn "Debian rootfs already exists — removing"
-        proot-distro remove debian 2>/dev/null || true
-        rm -rf "$ROOTFS" 2>/dev/null || true
-    fi
-
-    info "Pulling debian:trixie from Docker Hub..."
-    if ! retry "proot-distro install debian:trixie 2>&1 | tail -5"; then
-        error_ "Failed to install Debian Trixie"
-        error_ "Check internet connection and try again"; exit 1
-    fi
-
     if [[ ! -d "$ROOTFS" ]]; then
-        error_ "Debian rootfs not found at ${ROOTFS}"
-        local found
-        found=$(proot-distro list 2>/dev/null | grep -i debian | head -1 | awk '{print $1}')
-        if [[ -n "$found" ]]; then
-            error_ "Found container '${found}' but expected 'debian'"
-            error_ "Run: proot-distro rename ${found} debian"
+        info "Installing Debian Bookworm from standard tarball..."
+        if ! retry "proot-distro install debian 2>&1 | tail -5"; then
+            error_ "Failed to install Debian"
+            error_ "Check internet connection and try again"; exit 1
         fi
-        exit 1
+        if [[ ! -d "$ROOTFS" ]]; then
+            error_ "Debian rootfs not found at ${ROOTFS}"; exit 1
+        fi
+    else
+        info "Existing Debian rootfs found — upgrading to Trixie"
     fi
 
-    mark_done "trixie"; ok "Debian Trixie installed"
+    info "Switching Bookworm sources to Trixie..."
+    run_in_debian sh -c "echo 'deb http://deb.debian.org/debian trixie main contrib non-free' > /etc/apt/sources.list"
+
+    info "Updating package lists..."
+    run_in_debian apt-get update || true
+
+    info "Dist-upgrading to Trixie (this may take a while)..."
+    if ! run_in_debian DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y; then
+        warn "Dist-upgrade had issues — may already be Trixie"
+    fi
+
+    run_in_debian sh -c "rm -f /etc/apt/sources.list.d/*.list 2>/dev/null || true"
+
+    local version
+    version=$(proot-distro login debian -- bash -c "cat /etc/debian_version 2>/dev/null || echo unknown" 2>/dev/null)
+    info "Debian version: ${version}"
+
+    mark_done "trixie"; ok "Debian Trixie installed (${version})"
 }
 
 # ── Step 5: Configure Debian ───────────────────────────────────────────
@@ -209,11 +220,20 @@ step_configure_debian() {
     info "Upgrading packages..."
     run_in_debian DEBIAN_FRONTEND=noninteractive apt-get upgrade -y || true
 
-    info "Installing Debian packages..."
+    info "Installing core Debian packages..."
     if ! run_in_debian DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        sudo curl wget git nano xfce4 dbus-x11 firefox-esr pavucontrol-qt; then
-        warn "Some Debian packages may not have installed"
+        sudo curl wget git nano; then
+        warn "Some core packages may not have installed"
     fi
+
+    info "Installing XFCE4 desktop..."
+    if ! run_in_debian DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        xfce4 xfce4-session dbus-x11 firefox-esr pavucontrol-qt; then
+        warn "Some desktop packages may not have installed"
+    fi
+
+    info "Verifying XFCE4 session..."
+    run_in_debian bash -c "command -v xfce4-session" || warn "xfce4-session not found — GUI may not work"
 
     info "Creating user '${DEBIAN_USER}'..."
     run_in_debian groupadd -f storage 2>/dev/null || true
