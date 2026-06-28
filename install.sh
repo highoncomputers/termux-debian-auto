@@ -11,7 +11,8 @@ DEBIAN_USER="debian"
 LOG_FILE="${HOME}/termux-debian-auto.log"
 STATE_DIR="${HOME}/.termux-debian-auto"
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
-ROOTFS="${PREFIX}/var/lib/proot-distro/installed-rootfs/debian"
+# proot-distro v5: containers/<name>/rootfs/, v4 (legacy): installed-rootfs/<name>/
+ROOTFS="${PREFIX}/var/lib/proot-distro/containers/debian/rootfs"
 DEBIAN_HOME="${ROOTFS}/home/${DEBIAN_USER}"
 TOTAL_STEPS=9
 
@@ -65,6 +66,18 @@ run_in_debian() {
     proot-distro login debian --shared-tmp -- /bin/bash -c "$cmd"
 }
 
+# Detect Debian rootfs path (proot-distro v5 uses containers/, v4 used installed-rootfs/)
+detect_rootfs() {
+    local new_path="${PREFIX}/var/lib/proot-distro/containers/debian/rootfs"
+    local legacy_path="${PREFIX}/var/lib/proot-distro/installed-rootfs/debian"
+    if [[ -d "$new_path" ]]; then
+        ROOTFS="$new_path"
+    elif [[ -d "$legacy_path" ]]; then
+        ROOTFS="$legacy_path"
+    fi
+    DEBIAN_HOME="${ROOTFS}/home/${DEBIAN_USER}"
+}
+
 # ── Step 1: System Check ───────────────────────────────────────────────
 step_system_check() {
     step_header 1 "System Check"
@@ -92,10 +105,10 @@ step_install_deps() {
     if is_done "deps"; then info "Already completed, skipping"; return; fi
 
     info "Updating package repositories..."
-    retry "pkg update -y -o Dpkg::Options::='--force-confold' 2>&1 | tail -3" || true
+    retry "pkg update -y -o Dpkg::Options::='--force-confold' 2>&1" || true
 
     info "Upgrading packages..."
-    retry "pkg upgrade -y -o Dpkg::Options::='--force-confold' 2>&1 | tail -3" || true
+    retry "pkg upgrade -y -o Dpkg::Options::='--force-confold' 2>&1" || true
 
     if [[ ! -d ~/storage ]]; then
         info "Setting up storage access..."
@@ -110,7 +123,7 @@ step_install_deps() {
     for pkg in "${packages[@]}"; do
         ((count++))
         info "[${count}/${total}] Installing ${pkg}..."
-        if ! retry "pkg install -y ${pkg} -o Dpkg::Options::='--force-confold' 2>&1 | tail -2"; then
+        if ! retry "pkg install -y ${pkg} -o Dpkg::Options::='--force-confold' 2>&1"; then
             warn "Failed to install ${pkg}"; failed+=("$pkg")
         fi
     done
@@ -129,7 +142,7 @@ step_create_launchers() {
     cat > "${PREFIX}/bin/debian" << 'LAUNCHER_CLI'
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
-exec proot-distro login debian
+exec proot-distro login debian --shared-tmp
 LAUNCHER_CLI
 
     cat > "${PREFIX}/bin/debian-gui" << 'LAUNCHER_GUI'
@@ -179,15 +192,17 @@ step_install_trixie() {
 
     if [[ ! -d "$ROOTFS" ]]; then
         info "Installing Debian Bookworm from standard tarball..."
-        if ! retry "proot-distro install debian 2>&1 | tail -5"; then
+        if ! retry "proot-distro install debian 2>&1"; then
             error_ "Failed to install Debian"
             error_ "Check internet connection and try again"; exit 1
         fi
+        detect_rootfs
         if [[ ! -d "$ROOTFS" ]]; then
             error_ "Debian rootfs not found at ${ROOTFS}"; exit 1
         fi
     else
         info "Existing Debian rootfs found — upgrading to Trixie"
+        detect_rootfs
     fi
 
     info "Switching Bookworm sources to Trixie..."
@@ -214,6 +229,8 @@ step_install_trixie() {
 step_configure_debian() {
     step_header 5 "Configure Debian"
     if is_done "configured"; then info "Already configured, skipping"; return; fi
+
+    detect_rootfs
 
     info "Updating package lists..."
     run_in_debian apt-get update -y || true
@@ -249,6 +266,9 @@ step_configure_debian() {
     run_in_debian sh -c "echo 'export DISPLAY=:0' >> /home/${DEBIAN_USER}/.bashrc"
     run_in_debian sh -c "echo 'export PULSE_SERVER=127.0.0.1' >> /home/${DEBIAN_USER}/.bashrc"
 
+    info "Cleaning package cache..."
+    run_in_debian apt-get clean || true
+
     mark_done "configured"; ok "Debian Trixie configured"
 }
 
@@ -256,6 +276,8 @@ step_configure_debian() {
 step_configure_xfce4() {
     step_header 6 "Configure XFCE4 Desktop"
     if is_done "xfce4"; then info "Already configured, skipping"; return; fi
+
+    detect_rootfs
 
     if [[ ! -d "${DEBIAN_HOME}" ]]; then
         error_ "Debian home not found: ${DEBIAN_HOME}"; exit 1
