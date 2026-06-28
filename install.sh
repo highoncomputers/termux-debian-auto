@@ -141,6 +141,7 @@ if [[ -f /etc/debian_version ]]; then
 fi
 export XDG_RUNTIME_DIR=${TMPDIR:-/tmp}
 termux-x11 :0 >/dev/null 2>&1 &
+am start -n com.termux.x11/.MainActivity >/dev/null 2>&1 || true
 sleep 3
 proot-distro login debian --shared-tmp -- bash -c "
 export DISPLAY=:0
