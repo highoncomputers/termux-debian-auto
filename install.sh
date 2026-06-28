@@ -23,7 +23,7 @@ BLUE='\033[0;34m'; NC='\033[0m'
 
 info()  { echo -e "${BLUE}[i]${NC} $*"; }
 ok()    { echo -e "${GREEN}[✓]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[!]${NC} $*"; error_ "$*"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $*"; log "WARN" "$*"; }
 error_(){ echo -e "${RED}[✗]${NC} $*"; }
 log()   { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$1] $2" >> "$LOG_FILE"; }
 
@@ -40,15 +40,20 @@ is_done() { [[ -f "${STATE_DIR}/$1" ]]; }
 mark_done() { mkdir -p "${STATE_DIR}"; touch "${STATE_DIR}/$1"; }
 
 retry() {
-    local cmd="$1" max=3 attempt=1
+    local cmd="$1" max=3 attempt=1 outfile
+    outfile="$(mktemp)"
     while [[ $attempt -le $max ]]; do
-        if eval "$cmd"; then return 0; fi
+        if eval "$cmd" >"$outfile" 2>&1; then
+            rm -f "$outfile"
+            return 0
+        fi
         warn "Retrying (${attempt}/${max})..."
-        log "WARN" "Retry ${attempt}/${max}: $cmd"
+        log "WARN" "Retry ${attempt}/${max}: $(tail -3 "$outfile")"
         ((attempt++)); sleep 3
     done
     error_ "Failed after ${max} attempts: $cmd"
-    log "ERROR" "Failed after ${max} attempts: $cmd"
+    log "ERROR" "Failed after ${max} attempts: $(tail -5 "$outfile")"
+    rm -f "$outfile"
     return 1
 }
 
@@ -151,7 +156,7 @@ LAUNCHER_GUI
         mkdir -p "${HOME}/bin"
         ln -sf "${PREFIX}/bin/debian" "${HOME}/bin/debian"
         ln -sf "${PREFIX}/bin/debian-gui" "${HOME}/bin/debian-gui"
-        if ! grep -q 'HOME/bin' "${HOME}/.bashrc" 2>/dev/null; then
+        if ! grep -q "${HOME}/bin" "${HOME}/.bashrc" 2>/dev/null; then
             echo "" >> "${HOME}/.bashrc"
             echo "# termux-debian-auto" >> "${HOME}/.bashrc"
             echo 'export PATH="$HOME/bin:$PATH"' >> "${HOME}/.bashrc"
