@@ -40,38 +40,28 @@ No kernel modifications, no system partitions, no bootloaders. Just a proot cont
 
 ---
 
-## Quick Start
+## Step 1: Download the Apps
 
-Open Termux and run **one command**:
+| App | Details |
+|-----|---------|
+| **Termux** | Install from [F-Droid](https://f-droid.org/packages/com.termux/) only — the Play Store version is outdated |
+| **Termux-X11 APK** | Download from the [releases page](https://github.com/termux/termux-x11/releases) and install as a normal Android app |
+
+Both APKs (ARM64) are also bundled in the [v1.0 release assets](https://github.com/highoncomputers/termux-debian-auto/releases/tag/v1.0) for convenience.
+
+**Requirements:** Android 7.0+, ARM64 recommended, 4 GB+ free storage.
+
+---
+
+## Step 2: Run the Installer
+
+Open Termux and paste this command:
 
 ```bash
 curl -sL https://raw.githubusercontent.com/highoncomputers/termux-debian-auto/main/install.sh | bash
 ```
 
-That's it. The installer handles everything automatically.
-
----
-
-## Prerequisites
-
-| Requirement | Details |
-|-------------|---------|
-| **Termux** | Install from [F-Droid](https://f-droid.org/packages/com.termux/) only — the Play Store version is outdated |
-| **Termux-X11 APK** | Download from the [releases page](https://github.com/termux/termux-x11/releases) and install as a normal Android app |
-| **Android** | Version 7.0+, ARM64 recommended |
-| **Storage** | 4 GB+ free space |
-
-### Downloads
-
-Both Termux and Termux-X11 APKs (ARM64) are bundled in the
-[v1.0 release assets](https://github.com/highoncomputers/termux-debian-auto/releases/tag/v1.0)
-for convenience.
-
----
-
-## What Gets Installed
-
-The installer runs 9 steps automatically:
+The installer handles everything automatically. Sit back and relax while it runs through 9 steps:
 
 | Step | What Happens |
 |------|-------------|
@@ -89,7 +79,7 @@ The installer runs 9 steps automatically:
 
 ---
 
-## Usage
+## Step 3: Using Your Debian System
 
 ### CLI Mode
 
@@ -109,7 +99,7 @@ This single command does everything automatically:
 
 1. Starts the X11 server in the background
 2. Opens the Termux-X11 Android app (no manual tapping needed)
-3. Waits 3 seconds for initialization
+3. Waits 5 seconds for initialization
 4. Logs into Debian Trixie
 5. Launches the XFCE4 desktop with PulseAudio and display forwarding
 

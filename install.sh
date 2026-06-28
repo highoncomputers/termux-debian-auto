@@ -155,7 +155,7 @@ fi
 export XDG_RUNTIME_DIR=${TMPDIR:-/tmp}
 termux-x11 :0 >/dev/null 2>&1 &
 am start -n com.termux.x11/.MainActivity >/dev/null 2>&1 || true
-sleep 3
+sleep 5
 proot-distro login debian --shared-tmp -- bash -c "
 export DISPLAY=:0
 export PULSE_SERVER=127.0.0.1
@@ -235,19 +235,10 @@ step_configure_debian() {
     info "Updating package lists..."
     run_in_debian apt-get update -y || true
 
-    info "Upgrading packages..."
-    run_in_debian DEBIAN_FRONTEND=noninteractive apt-get upgrade -y || true
-
-    info "Installing core Debian packages..."
+    info "Installing Debian packages..."
     if ! run_in_debian DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        sudo curl wget git nano; then
-        warn "Some core packages may not have installed"
-    fi
-
-    info "Installing XFCE4 desktop..."
-    if ! run_in_debian DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        xfce4 xfce4-session dbus-x11 firefox-esr pavucontrol-qt; then
-        warn "Some desktop packages may not have installed"
+        sudo curl wget git nano xfce4 xfce4-session dbus-x11 firefox-esr pavucontrol-qt 2>/dev/null; then
+        warn "Some packages may not have installed"
     fi
 
     info "Verifying XFCE4 session..."
